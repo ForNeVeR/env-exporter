@@ -13,12 +13,18 @@ $ ./Export-Env.ps1 E:/Temp/env.json
 It will save the file of the following format:
 
 ```json
-{
-    "User": {
-        "var1": "value1"
+[
+    {
+        "scope": "User",
+        "variables": [
+            { "name": "var1", "value": "value1" }
+        ]
     },
-    "Machine": {
-        "var2": "value2"
+    {
+        "scope": "Machine",
+        "variables": [
+            { "name": "var1", "value": "value1" }
+        ]
     }
 }
 ```

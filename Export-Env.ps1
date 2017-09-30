@@ -3,6 +3,8 @@ param (
     [string] $OutPath
 )
 
+$ErrorActionPreference = 'Stop'
+
 $scopes = @(
     [EnvironmentVariableTarget]::Machine
     [EnvironmentVariableTarget]::User
@@ -21,14 +23,15 @@ function Get-EnvironmentVariables($scope) {
 
     try {
         $variables = $registryKey.GetValueNames()
-        $scopeResult = @{}
-        foreach ($name in $variables) {
+        [Collections.ArrayList] $scopeResult = @()
+        $variables | Sort-Object | ForEach-Object {
+            $name = $_
             $value = $registryKey.GetValue(
                 $name,
                 $null,
                 [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
             if ($value -ne $null) {
-                $scopeResult[$name] = $value
+                $scopeResult.Add(@{ name = $name; value = $value }) | Out-Null
             }
         }
 
@@ -38,9 +41,10 @@ function Get-EnvironmentVariables($scope) {
     }
 }
 
-$result = @{}
-$scopes | ForEach-Object {
-    $result[$_.ToString()] = Get-EnvironmentVariables $_
+[Collections.ArrayList] $result = @()
+$scopes | Sort-Object | ForEach-Object {
+    $values = Get-EnvironmentVariables $_
+    $result.Add(@{ scope = $_.ToString(); variables = $values }) | Out-Null
 }
 
-$result | ConvertTo-Json | Out-File $OutPath -Encoding utf8
+$result | ConvertTo-Json -Depth 3 | Out-File $OutPath -Encoding utf8
