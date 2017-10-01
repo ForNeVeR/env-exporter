@@ -5,11 +5,6 @@ param (
 
 $ErrorActionPreference = 'Stop'
 
-$scopes = @(
-    [EnvironmentVariableTarget]::Machine
-    [EnvironmentVariableTarget]::User
-)
-
 function Get-EnvironmentVariables($scope) {
     $registryKey =
         if ($scope -eq [EnvironmentVariableTarget]::Machine) {
@@ -22,29 +17,25 @@ function Get-EnvironmentVariables($scope) {
         }
 
     try {
-        $variables = $registryKey.GetValueNames()
-        [Collections.ArrayList] $scopeResult = @()
-        $variables | Sort-Object | ForEach-Object {
+        $registryKey.GetValueNames() | Sort-Object | ForEach-Object {
             $name = $_
             $value = $registryKey.GetValue(
                 $name,
                 $null,
                 [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
-            if ($value -ne $null) {
-                $scopeResult.Add(@{ name = $name; value = $value }) | Out-Null
-            }
+            @{ name = $name; value = $value }
         }
-
-        $scopeResult
     } finally {
         $registryKey.Dispose()
     }
 }
 
-[Collections.ArrayList] $result = @()
+$scopes = @(
+    [EnvironmentVariableTarget]::Machine
+    [EnvironmentVariableTarget]::User
+)
+
 $scopes | Sort-Object | ForEach-Object {
     $values = Get-EnvironmentVariables $_
-    $result.Add(@{ scope = $_.ToString(); variables = $values }) | Out-Null
-}
-
-$result | ConvertTo-Json -Depth 3 | Out-File $OutPath -Encoding utf8
+    @{ scope = $_.ToString(); variables = $values }
+} | ConvertTo-Json -Depth 3 | Out-File $OutPath -Encoding utf8
