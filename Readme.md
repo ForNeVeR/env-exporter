@@ -26,5 +26,5 @@ It will save the file of the following format:
             { "name": "var1", "value": "value1" }
         ]
     }
-}
+]
 ```
